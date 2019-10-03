@@ -21,6 +21,7 @@ class TopChatter : IObserver {
         println(messageCountMap)
     }
 
+    //Not currently in used!
     fun removeUser(username: String) {
         messageCountMap.remove(username)
     }
