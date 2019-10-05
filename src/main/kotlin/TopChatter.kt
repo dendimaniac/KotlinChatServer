@@ -6,11 +6,11 @@ class TopChatter : IObserver {
     }
 
     override fun newMessage(chatMessage: ChatMessage) {
-        if (!messageCountMap.containsKey(chatMessage.userName)) {
-            messageCountMap[chatMessage.userName] = 1
+        if (!messageCountMap.containsKey(chatMessage.username)) {
+            messageCountMap[chatMessage.username] = 1
         } else {
-            var count = messageCountMap[chatMessage.userName]!!
-            messageCountMap[chatMessage.userName] = ++count
+            var count = messageCountMap[chatMessage.username]!!
+            messageCountMap[chatMessage.username] = ++count
         }
 
         printTopChatter()
