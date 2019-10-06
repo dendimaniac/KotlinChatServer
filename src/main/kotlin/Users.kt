@@ -1,6 +1,10 @@
 object Users {
     private val usernameSet: HashSet<String> = hashSetOf()
 
+    init {
+        usernameSet.clear()
+    }
+
     fun insertUsername(newUsername: String) {
         usernameSet.add(newUsername)
     }
@@ -10,11 +14,7 @@ object Users {
     }
 
     fun checkUsernameExist(username: String): Boolean {
-        var isExist = false
-        usernameSet.forEach {
-            isExist = it == username
-        }
-        return isExist
+        return usernameSet.contains(username)
     }
 
     override fun toString(): String {

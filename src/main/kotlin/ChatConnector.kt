@@ -1,3 +1,4 @@
+import com.example.chatclient.Model.Time
 import kotlinx.serialization.json.Json
 import java.io.InputStream
 import java.io.OutputStream
@@ -7,15 +8,15 @@ import java.util.*
 
 /*
 Telnet client test
-{"message":"asdasd", "username":"dendi", "timestamp":"05300324"}
+{"username":"dendi","command":"chat","message":"asdasd","timestamp":"05300324"}
  */
 
-class ChatConnector(inputStream: InputStream, outputStream: OutputStream, private val connector: Socket) : Runnable, IObserver {
+class ChatConnector(inputStream: InputStream, outputStream: OutputStream, private val connector: Socket) : Runnable,
+    IObserver {
     private val messageIn = Scanner(inputStream)
     private val messageOut = PrintStream(outputStream, true)
 
     private var canExit = false
-    private var hasStart = false
     private var username = ""
 
     init {
@@ -29,7 +30,7 @@ class ChatConnector(inputStream: InputStream, outputStream: OutputStream, privat
     private fun startChatting() {
         while (!canExit) {
             val newMessage: ChatMessage = getInput()
-            if (!isCommand(newMessage.message)) {
+            if (!isCommand(newMessage)) {
                 ChatHistory.insert(newMessage)
             }
         }
@@ -38,28 +39,37 @@ class ChatConnector(inputStream: InputStream, outputStream: OutputStream, privat
 
     private fun getInput(): ChatMessage {
         val messageAsJson = messageIn.nextLine()
-        println(messageAsJson)
         return Json.parse(ChatMessage.serializer(), messageAsJson)
     }
 
-    private fun isCommand(input: String): Boolean {
-        when {
-            input == "!exit" -> {
+    private fun isCommand(chatMessage: ChatMessage): Boolean {
+        when(chatMessage.command) {
+            Commands.Quit -> {
                 ChatHistory.deregisterObserver(this)
                 Users.removeUsername(username)
                 canExit = true
                 return true
             }
-            input == "!history" -> {
+            Commands.History -> {
                 messageOut.println(ChatHistory)
                 return true
             }
-            input == "!users" -> {
+            Commands.Users -> {
                 messageOut.println(Users)
                 return true
             }
-            input.indexOf("!") == 0 -> {
-                messageOut.println("Invalid command!")
+            Commands.Login -> {
+                var responseMessage: ChatMessage
+                if (!Users.checkUsernameExist(chatMessage.username)) {
+                    username = chatMessage.username
+                    Users.insertUsername(username)
+                    responseMessage = ChatMessage(username, Commands.Chat, "$username has joined the chat!", Time.getTime())
+                    ChatHistory.insert(responseMessage)
+                }
+                else {
+                    responseMessage = ChatMessage(username, Commands.Login, "Username already exists!", Time.getTime())
+                    newMessage(responseMessage)
+                }
                 return true
             }
             else -> return false
@@ -67,7 +77,6 @@ class ChatConnector(inputStream: InputStream, outputStream: OutputStream, privat
     }
 
     override fun newMessage(chatMessage: ChatMessage) {
-        if (!hasStart) return
         val messageAsJson = Json.stringify(ChatMessage.serializer(), chatMessage)
         messageOut.println(messageAsJson)
     }

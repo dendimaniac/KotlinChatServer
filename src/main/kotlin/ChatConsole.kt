@@ -4,6 +4,6 @@ class ChatConsole: IObserver {
     }
 
     override fun newMessage(chatMessage: ChatMessage) {
-        println(chatMessage)
+        println(chatMessage.asString())
     }
 }
