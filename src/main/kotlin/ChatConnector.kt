@@ -8,10 +8,15 @@ import java.util.*
 
 /*
 Telnet client test
-{"username":"dendi","command":"chat","message":"asdasd","timestamp":"05300324"}
+{"username":"dendi","command":"Chat","message":"asdasd","timestamp":"05300324"}
  */
 
-class ChatConnector(inputStream: InputStream, outputStream: OutputStream, private val connector: Socket) : Runnable,
+class ChatConnector(
+    inputStream: InputStream,
+    outputStream: OutputStream,
+    private val connector: Socket,
+    private val topChatter: TopChatter
+) : Runnable,
     IObserver {
     private val messageIn = Scanner(inputStream)
     private val messageOut = PrintStream(outputStream, true)
@@ -39,11 +44,12 @@ class ChatConnector(inputStream: InputStream, outputStream: OutputStream, privat
 
     private fun getInput(): ChatMessage {
         val messageAsJson = messageIn.nextLine()
+        println(messageAsJson)
         return Json.parse(ChatMessage.serializer(), messageAsJson)
     }
 
     private fun isCommand(chatMessage: ChatMessage): Boolean {
-        when(chatMessage.command) {
+        when (chatMessage.command) {
             Commands.Quit -> {
                 ChatHistory.deregisterObserver(this)
                 Users.removeUsername(username)
@@ -51,11 +57,17 @@ class ChatConnector(inputStream: InputStream, outputStream: OutputStream, privat
                 return true
             }
             Commands.History -> {
-                messageOut.println(ChatHistory)
+                val message = ChatHistory.getHistory(chatMessage.username)
+                messageOut.println(message)
                 return true
             }
             Commands.Users -> {
                 messageOut.println(Users)
+                return true
+            }
+            Commands.Top -> {
+                val message = topChatter.getTopChatter(chatMessage.username)
+                messageOut.println(message)
                 return true
             }
             Commands.Login -> {
@@ -63,10 +75,10 @@ class ChatConnector(inputStream: InputStream, outputStream: OutputStream, privat
                 if (!Users.checkUsernameExist(chatMessage.username)) {
                     username = chatMessage.username
                     Users.insertUsername(username)
-                    responseMessage = ChatMessage(username, Commands.Chat, "$username has joined the chat!", Time.getTime())
+                    responseMessage =
+                        ChatMessage(username, Commands.Chat, "$username has joined the chat!", Time.getTime())
                     ChatHistory.insert(responseMessage)
-                }
-                else {
+                } else {
                     responseMessage = ChatMessage(username, Commands.Login, "Username already exists!", Time.getTime())
                     newMessage(responseMessage)
                 }

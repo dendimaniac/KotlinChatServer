@@ -1,3 +1,6 @@
+import com.example.chatclient.Model.Time
+import kotlinx.serialization.json.Json
+
 object ChatHistory : IObservable {
     override val observerSet: MutableSet<IObserver> = mutableSetOf()
     private val messageSet: MutableSet<ChatMessage> = mutableSetOf()
@@ -21,11 +24,17 @@ object ChatHistory : IObservable {
         notifyObservers(message)
     }
 
-    override fun toString(): String {
-        var allMessage = ""
-        for (message in messageSet) {
-            allMessage += "$message\r\n"
+    fun getHistory(username: String): String {
+        var history: ChatMessage
+        var historyMessage = ""
+        messageSet.forEach { message ->
+            historyMessage += if (messageSet.indexOf(message) != messageSet.size - 1) {
+                "${Json.stringify(ChatMessage.serializer(), message)}|"
+            } else {
+                Json.stringify(ChatMessage.serializer(), message)
+            }
         }
-        return allMessage
+        history = ChatMessage(username, Commands.History, historyMessage, Time.getTime())
+        return Json.stringify(ChatMessage.serializer(), history)
     }
 }

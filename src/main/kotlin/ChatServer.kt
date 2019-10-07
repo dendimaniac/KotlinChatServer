@@ -12,7 +12,14 @@ class ChatServer {
             val acceptedConnect = serverSocket.accept()
             println("Accepted ${acceptedConnect.inetAddress.hostAddress}: ${acceptedConnect.port}")
 
-            Thread(ChatConnector(acceptedConnect.getInputStream(), acceptedConnect.getOutputStream(), acceptedConnect)).start()
+            Thread(
+                ChatConnector(
+                    acceptedConnect.getInputStream(),
+                    acceptedConnect.getOutputStream(),
+                    acceptedConnect,
+                    topChatter
+                )
+            ).start()
         }
     }
 }
