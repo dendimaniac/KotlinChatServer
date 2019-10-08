@@ -2,7 +2,7 @@ import com.example.chatclient.Model.Time
 import kotlinx.serialization.json.Json
 
 class TopChatter : IObserver {
-    private val messageCountMap = mutableMapOf<String, Int>()
+    private var messageCountMap = mutableMapOf<String, Int>()
 
     init {
         ChatHistory.registerObserver(this)
@@ -29,7 +29,7 @@ class TopChatter : IObserver {
     fun getTopChatter(username: String): String {
         sortTopChatterMap()
 
-        var topChatter: ChatMessage
+        val topChatter: ChatMessage
         var topChatterMessage = ""
         messageCountMap.forEach {
             val message = ChatMessage(it.key, Commands.Top, it.value.toString(), Time.getTime())
@@ -44,10 +44,7 @@ class TopChatter : IObserver {
     }
 
     private fun sortTopChatterMap() {
-        val sortedMap =
-            messageCountMap.toSortedMap(Comparator { start, next -> messageCountMap[next]!! - messageCountMap[start]!! })
-        messageCountMap.clear()
-        messageCountMap.putAll(sortedMap)
+        messageCountMap = messageCountMap.toList().sortedWith(compareByDescending { it.second }).toMap().toMutableMap()
     }
 
     //Not currently in used!
